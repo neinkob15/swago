@@ -58,9 +58,10 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 			}
 			swagTag, _ := tags.Get("swag")
 			jsonTag, err := tags.Get("json")
-			if err != nil {
-				continue
-			}
+			tagName := typeOfS.Field(i).Name
+			if err == nil {
+				tagName = jsonTag.Name
+			} 
 			readOnly := false
 			writeOnly := false
 			if swagTag != nil {
@@ -70,17 +71,17 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 					} else if option == "writeOnly" {
 						writeOnly = true
 					} else if option == "required" {
-						requiredProps = append(requiredProps, jsonTag.Name)
+						requiredProps = append(requiredProps, tagName)
 					}
 				}
-				props[jsonTag.Name] = Property{
+				props[tagName] = Property{
 					Type: t,
 					Description: swagTag.Name,
 					WriteOnly: writeOnly,
 					ReadOnly: readOnly,
 				}
 			} else {
-				props[jsonTag.Name] = Property{
+				props[tagName] = Property{
 					Type: t,
 					Description: "",
 					WriteOnly: writeOnly,

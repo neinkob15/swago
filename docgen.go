@@ -1,11 +1,14 @@
 package swaggergen
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
+	"encoding/json"
+	"bytes"
+	"strings"
 	"github.com/go-chi/chi/v5"
+	"gopkg.in/yaml.v3"
 )
 
 type DocRouter struct {
@@ -105,9 +108,77 @@ func JSONRoutesDoc(r chi.Routes, title string, description string) string {
 	if err != nil {
 		panic(err)
 	}
-	v, err := json.MarshalIndent(doc, "", "  ")
+	v, err := json.Marshal(doc)
 	if err != nil {
 		panic(err)
 	}
-	return string(v)
+	j2, err := JSONToYAML(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(j2)
+}
+
+func JSONToYAML(jsonData []byte) ([]byte, error) {
+	return NewMarshaler().JSONToYAML(jsonData)
+}
+func NewMarshaler(os ...MarshalOption) *Marshaler {
+	opts := &marshalOptions{
+		Intend: 4, // Default for yaml.v3 package.
+	}
+	for _, o := range os {
+		o(opts)
+	}
+	m := &Marshaler{}
+	m.enc = yaml.NewEncoder(&m.buf)
+	m.enc.SetIndent(opts.Intend)
+	return m
+}
+
+type Marshaler struct {
+	buf bytes.Buffer
+	enc *yaml.Encoder
+}
+
+func (m *Marshaler) JSONToYAML(jsonData []byte) ([]byte, error) {
+	n := &yaml.Node{}
+	err := yaml.Unmarshal(jsonData, n)
+	if err != nil {
+		return nil, err
+	}
+	jsonToYAMLFormat(n)
+
+	m.buf.Reset()
+	err = m.enc.Encode(n)
+	if err != nil {
+		return nil, fmt.Errorf("marshal formated: %w", err)
+	}
+	return m.buf.Bytes(), nil
+}
+
+type MarshalOption func(opts *marshalOptions)
+type marshalOptions struct {
+	Intend int
+}
+
+func Indent(n int) MarshalOption {  return func(opts *marshalOptions) {opts.Intend = n } }
+
+func jsonToYAMLFormat(n *yaml.Node) {
+	if n == nil {
+		return
+	}
+	switch n.Kind {
+	case yaml.SequenceNode, yaml.MappingNode:
+		n.Style = yaml.LiteralStyle
+	case yaml.ScalarNode:
+		if n.Style == yaml.DoubleQuotedStyle {
+			n.Style = yaml.FlowStyle
+			if strings.Contains(n.Value, "\n") {
+				n.Style = yaml.LiteralStyle
+			}
+		}
+	}
+	for _, c := range n.Content {
+		jsonToYAMLFormat(c)
+	}
 }
