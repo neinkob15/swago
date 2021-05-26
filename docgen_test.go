@@ -1,4 +1,4 @@
-package docgen_test
+package swaggergen_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/docgen"
+	"github.com/neinkob15/swaggergen"
 )
 
 // RequestID comment goes here.

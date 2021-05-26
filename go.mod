@@ -1,4 +1,4 @@
-module github.com/go-chi/docgen
+module github.com/neinkob15/swaggergen
 
 go 1.15
 

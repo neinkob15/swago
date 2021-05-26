@@ -1,67 +1,65 @@
-package docgen
+package swaggergen
 
 import (
 	"go/parser"
 	"go/token"
-	"os"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
 )
 
 type FuncInfo struct {
-	Pkg          string `json:"pkg"`
-	Func         string `json:"func"`
-	Comment      string `json:"comment"`
-	File         string `json:"file,omitempty"`
-	Line         int    `json:"line,omitempty"`
-	Anonymous    bool   `json:"anonymous,omitempty"`
-	Unresolvable bool   `json:"unresolvable,omitempty"`
+	Tags []string `json:"tags,omitempty"`
+	Summary         string `json:"summary"`
+	Security []map[string][]string `json:"security"`
+	Description string `json:"description"`
+	Parameters []Parameter `json:"parameters,omitempty"`
+	RequestBody *RequestBody `json:"requestBody,omitempty"`
+	Responses Responses `json:"responses"`
+}
+type Parameter struct {
+	Name string `json:"name"`
+	In string `json:"in"`
+	Required bool `json:"required"`
+	Schema ParamSchema `json:"schema"`
+}
+type ParamSchema struct {
+	Type string `json:"type"`
+	Enum []string `json:"enum,omitempty"`
+}
+type RequestBody struct {
+	Required bool `json:"required,omitempty"`
+	Content Content `json:"content"`
+}
+type Responses map[string]Response
+type Response struct {
+	Description string `json:"description"`
+	Content Content `json:"content"`
+}
+type Content struct {
+	ContentType ContentType `json:"application/json"`
+}
+type ContentType struct {
+	Schema Schema `json:"schema"`
+}
+type Schema struct {
+	Ref string `json:"$ref"`
 }
 
 func GetFuncInfo(i interface{}) FuncInfo {
 	fi := FuncInfo{}
 	frame := getCallerFrame(i)
-	goPathSrc := filepath.Join(os.Getenv("GOPATH"), "src")
-
-	if frame == nil {
-		fi.Unresolvable = true
-		return fi
-	}
 
 	pkgName := getPkgName(frame.File)
-	if pkgName == "chi" {
-		fi.Unresolvable = true
-	}
 	funcPath := frame.Func.Name()
 
 	idx := strings.Index(funcPath, "/"+pkgName)
 	if idx > 0 {
-		fi.Pkg = funcPath[:idx+1+len(pkgName)]
-		fi.Func = funcPath[idx+2+len(pkgName):]
+		fi.Summary = funcPath[idx+2+len(pkgName):]
 	} else {
-		fi.Func = funcPath
+		fi.Summary = funcPath
 	}
-
-	if strings.Index(fi.Func, ".func") > 0 {
-		fi.Anonymous = true
-	}
-
-	fi.File = frame.File
-	fi.Line = frame.Line
-	if filepath.HasPrefix(fi.File, goPathSrc) {
-		fi.File = fi.File[len(goPathSrc)+1:]
-	}
-
-	// Check if file info is unresolvable
-	if strings.Index(funcPath, pkgName) < 0 {
-		fi.Unresolvable = true
-	}
-
-	if !fi.Unresolvable {
-		fi.Comment = getFuncComment(frame.File, frame.Line)
-	}
+	fi.Description = getFuncComment(frame.File, frame.Line)
 
 	return fi
 }
