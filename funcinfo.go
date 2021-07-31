@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"reflect"
 	"runtime"
-	"strings"
 )
 
 type FuncInfo struct {
@@ -44,24 +43,6 @@ type ContentType struct {
 }
 type Schema struct {
 	Ref string `json:"$ref"`
-}
-
-func GetFuncInfo(i interface{}) FuncInfo {
-	fi := FuncInfo{}
-	frame := getCallerFrame(i)
-
-	pkgName := getPkgName(frame.File)
-	funcPath := frame.Func.Name()
-
-	idx := strings.Index(funcPath, "/"+pkgName)
-	if idx > 0 {
-		fi.Summary = funcPath[idx+2+len(pkgName):]
-	} else {
-		fi.Summary = funcPath
-	}
-	fi.Description = getFuncComment(frame.File, frame.Line)
-
-	return fi
 }
 
 func getCallerFrame(i interface{}) *runtime.Frame {

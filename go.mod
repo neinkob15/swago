@@ -1,4 +1,4 @@
-module github.com/neinkob15/swaggergen
+module github.com/neinkob15/swag
 
 go 1.15
 

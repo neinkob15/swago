@@ -9,6 +9,11 @@ import (
 	"strings"
 	"github.com/go-chi/chi/v5"
 	"gopkg.in/yaml.v3"
+	"net/http"
+	"runtime"
+	"go/parser"
+	"go/token"
+	"go/ast"
 )
 
 type DocRouter struct {
@@ -60,11 +65,20 @@ var definitions map[string]reflect.Value
 var responseStates map[string]string
 var tags map[string]string
 var servers map[string]string
+var helperFuncs []MethodWithFunc
+var helperFuncName string
+
+type MethodWithFunc struct{
+	Method string
+	Func func(w http.ResponseWriter, r *http.Request) (interface{}, error)
+}
+
 func init() {
 	definitions = map[string]reflect.Value{}
 	responseStates = map[string]string{}
 	tags = map[string]string{}
 	servers = map[string]string{}
+	helperFuncs = []MethodWithFunc{}
 }
 
 func PrintRoutes(r chi.Routes) {
@@ -98,6 +112,45 @@ func RegisterTag(name, description string) {
 }
 func RegisterServer(name, description string) {
 	servers[name] = description
+}
+func RegisterHelper(f func(w http.ResponseWriter, r *http.Request) (interface{}, error)) {
+	_, file, no, ok := runtime.Caller(2)
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, file, nil, parser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	var method string
+	ast.Inspect(node, func(n ast.Node) bool {
+		c, ok := n.(*ast.CallExpr)
+		if ok {
+			if fset.Position(c.Pos()).Line == no {
+				s, ok := c.Fun.(*ast.SelectorExpr)
+				if ok {
+					id := s.Sel
+					if id.Name != "With" {
+						method = strings.ToLower(id.Name)
+						return false
+					}
+				}
+			}
+		}
+		return true
+	})
+	if method == "" {
+		panic("method could not be retrieved")
+	}
+	pc, _, _, ok := runtime.Caller(1)
+    details := runtime.FuncForPC(pc)
+    if ok && details != nil {
+        helperFuncName = details.Name()
+    } else {
+		panic("there was a problem getting the name of the helper-function")
+	}
+	helperFuncs = append(helperFuncs, MethodWithFunc{
+		Func: f,
+		Method: method,
+	})
 }
 func ActivateJWTAuth() {
 	authActivated = true

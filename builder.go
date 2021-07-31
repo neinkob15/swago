@@ -1,22 +1,17 @@
 package swaggergen
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"strconv"
 	"regexp"
+	"sort"
 	"github.com/go-chi/chi/v5"
 	"github.com/fatih/structtag"
 )
 
 func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
-	goPath := os.Getenv("GOPATH")
-	if goPath == "" {
-		return DocRouter{}, errors.New("docgen: unable to determine your $GOPATH")
-	}
 	dr := DocRouter{SwaggerVersion: "3.0.1",
 					Info: Info{
 						Version: "1.0.0",
@@ -128,7 +123,16 @@ func buildDocRouterPaths(r chi.Routes, prefix string) Paths {
 
 		} else {
 			hall := rt.Handlers["*"]
-			for method, h := range rt.Handlers {
+
+			// sort route-handler map
+			keys := []string{}
+			for method, _ := range rt.Handlers {
+				keys = append(keys, method)
+			}
+			sort.Strings(keys)
+
+			for _, method := range keys {
+				h := rt.Handlers[method]
 				if method != "*" && hall != nil && fmt.Sprintf("%v", hall) == fmt.Sprintf("%v", h) {
 					continue
 				}
@@ -141,8 +145,7 @@ func buildDocRouterPaths(r chi.Routes, prefix string) Paths {
 				} else {
 					endpoint = h
 				}
-
-				drt[strings.ToLower(method)] = buildFuncInfo(endpoint, strings.ReplaceAll(prefix + rt.Pattern, "/*/", "/"))
+				drt[strings.ToLower(method)] = buildFuncInfo(endpoint, strings.ReplaceAll(prefix + rt.Pattern, "/*/", "/"), strings.ToLower(method), len(keys))
 			}
 			
 			drts[rt.Pattern] = drt
@@ -153,9 +156,24 @@ func buildDocRouterPaths(r chi.Routes, prefix string) Paths {
 	return drts
 }
 
-func buildFuncInfo(i interface{}, path string) FuncInfo {
+func buildFuncInfo(i interface{}, path string, method string, maxForward int) FuncInfo {
 	
 	fi := FuncInfo{}
+
+	if strings.Contains(getCallerFrame(i).Func.Name(), helperFuncName) {
+		if helperFuncs[0].Method != method {
+			for  c := 0; c < maxForward; c++ {
+				if helperFuncs[c].Method == method {
+					i = helperFuncs[c].Func
+					helperFuncs = append(helperFuncs[:c], helperFuncs[c+1:]...)
+					break
+				}
+			}
+		} else {
+			i = helperFuncs[0].Func
+			helperFuncs = helperFuncs[1:]
+		}
+	}
 
 	var parameters []Parameter
 	re := regexp.MustCompile("{.*}")
@@ -186,6 +204,7 @@ func buildFuncInfo(i interface{}, path string) FuncInfo {
 	frame := getCallerFrame(i)
 
 	funcPath := frame.Func.Name()
+
 	pkgName := getPkgName(frame.File)
 	idx := strings.Index(funcPath, "/"+pkgName)
 	if idx > 0 {
@@ -195,6 +214,9 @@ func buildFuncInfo(i interface{}, path string) FuncInfo {
 	}
 	fi.Summary = strings.Split(fi.Summary, ".")[len(strings.Split(fi.Summary, "."))-1]
 	comment := getFuncComment(frame.File, frame.Line)
+	if comment == "" {
+		comment = getFuncComment(frame.File, frame.Line - 1)
+	}
 	fi.Responses = map[string]Response{}
 	finalCommentLines := []string{}
 	for _, commentLine := range strings.Split(comment, "\n") {
