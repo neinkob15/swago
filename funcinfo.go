@@ -29,6 +29,7 @@ type ParamSchema struct {
 type RequestBody struct {
 	Required bool `json:"required,omitempty"`
 	Content Content `json:"content"`
+	Description string `json:"description,omitempty"`
 }
 type Responses map[string]Response
 type Response struct {

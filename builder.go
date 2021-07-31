@@ -246,18 +246,24 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 				}
 			}
 		} else if strings.HasPrefix(commentLine, "swagger.request: ") {
-			requestRef := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swagger.request: "), " ", "")
+			requestRef := strings.TrimPrefix(commentLine, "swagger.request: ")
 			required := false
-			if strings.Contains(requestRef, "*") {
-				requestRef = strings.ReplaceAll(requestRef, "*", "")
+			requestRef1 := strings.Split(requestRef, ",")[0]
+			if strings.Contains(requestRef1, "*") {
+				requestRef1 = strings.ReplaceAll(requestRef1, "*", "")
 				required = true
 			}
+			reqDesc := ""
+			if len(strings.Split(requestRef, ",")) > 1 {
+				reqDesc = strings.Split(requestRef, ",")[1]
+			}
 			fi.RequestBody = &RequestBody{
+				Description: reqDesc,
 				Required: required,
 				Content: Content{
 					ContentType: ContentType{
 						Schema: Schema{
-							Ref: "#/components/schemas/" + requestRef,
+							Ref: "#/components/schemas/" + requestRef1,
 						},
 					},
 				},
