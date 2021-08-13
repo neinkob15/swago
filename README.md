@@ -3,8 +3,8 @@
 Swago is a helper for the go-chi router to automatically generate swagger files.
 
 Example Comments for handler functions: 
-- ``` // swago.response: StructName```
-- ``` // swago.request: StructName*,Description``` 
+- ``` // swago.response: cat```
+- ``` // swago.request: cat*,Description``` 
 - ``` // swago.tag: TagName ```
 - ``` // swago.query: type{left;right}*,id+* ```
 - ``` // swago.header: header-name+* ```
