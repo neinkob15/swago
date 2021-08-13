@@ -51,7 +51,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 			if err != nil {
 				return DocRouter{}, err
 			}
-			swagTag, _ := tags.Get("swag")
+			swagTag, _ := tags.Get("swago")
 			jsonTag, err := tags.Get("json")
 			tagName := typeOfS.Field(i).Name
 			if err == nil {
@@ -225,8 +225,8 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 		if commentLine == "" {
 			continue
 		}
-		if strings.HasPrefix(commentLine, "swag.response: ") {
-			responseRefs := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swag.response: "), " ", "")
+		if strings.HasPrefix(commentLine, "swago.response: ") {
+			responseRefs := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swago.response: "), " ", "")
 			for _, responseRef := range strings.Split(responseRefs, ",") {
 				if responseStates[responseRef] == "default" {
 					continue
@@ -247,8 +247,8 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 					},
 				}
 			}
-		} else if strings.HasPrefix(commentLine, "swag.request: ") {
-			requestRef := strings.TrimPrefix(commentLine, "swag.request: ")
+		} else if strings.HasPrefix(commentLine, "swago.request: ") {
+			requestRef := strings.TrimPrefix(commentLine, "swago.request: ")
 			required := false
 			requestRef1 := strings.Split(requestRef, ",")[0]
 			if strings.Contains(requestRef1, "*") {
@@ -270,18 +270,18 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 					},
 				},
 			}
-		} else if strings.HasPrefix(commentLine, "swag.query: ") {
+		} else if strings.HasPrefix(commentLine, "swago.query: ") {
 			params := extractParam("query", commentLine)
 			if params != nil {
 				fi.Parameters = append(fi.Parameters, params...)
 			}
-		} else if strings.HasPrefix(commentLine, "swag.header: ") {
+		} else if strings.HasPrefix(commentLine, "swago.header: ") {
 			params := extractParam("header", commentLine)
 			if params != nil {
 				fi.Parameters = append(fi.Parameters, params...)
 			}
-		} else if strings.HasPrefix(commentLine, "swag.tag: ") {
-			tags := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swag.tag: "), " ", "")
+		} else if strings.HasPrefix(commentLine, "swago.tag: ") {
+			tags := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swago.tag: "), " ", "")
 			if len(tags) > 0 {
 				fi.Tags = strings.Split(tags, ",")
 			}
@@ -316,7 +316,7 @@ func extractParam(paramType, commentLine string) []Parameter {
 	re := regexp.MustCompile("{.*}")
 	var parameters []Parameter
 	
-	params := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swag." + paramType + ": "), " ", "")
+	params := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swago." + paramType + ": "), " ", "")
 	for _, param := range strings.Split(params, ",") {
 		var enumValues []string
 		if res := re.FindString(param); res != "" {
