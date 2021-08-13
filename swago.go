@@ -156,7 +156,7 @@ func ActivateJWTAuth() {
 	authActivated = true
 }
 
-func JSONRoutesDoc(r chi.Routes, title string, description string) string {
+func SwaggerRoutesDoc(r chi.Routes, title string, description string) string {
 	doc, err := BuildDoc(r, title, description)
 	if err != nil {
 		panic(err)
