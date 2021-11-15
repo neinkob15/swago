@@ -262,7 +262,7 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 					desc = http.StatusText(ok)
 				}
 
-				fi.Responses[responseStates[component]] = Response{
+				fi.Responses[responseStates[responseRef]] = Response{
 
 					Description: desc,
 					Content: Content{
