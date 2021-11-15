@@ -1,4 +1,4 @@
-module github.com/neinkob15/swag
+module github.com/neinkob15/swago
 
 go 1.15
 
