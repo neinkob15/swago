@@ -3,32 +3,33 @@ package swago
 import (
 	"fmt"
 	"net/http"
-	"strings"
-	"strconv"
 	"regexp"
 	"sort"
-	"github.com/go-chi/chi/v5"
+	"strconv"
+	"strings"
+
 	"github.com/fatih/structtag"
+	"github.com/go-chi/chi/v5"
 )
 
 func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 	dr := DocRouter{SwaggerVersion: "3.0.1",
-					Info: Info{
-						Version: "1.0.0",
-						Title: title,
-						Description: description,
-					},
-				}
+		Info: Info{
+			Version:     "1.0.0",
+			Title:       title,
+			Description: description,
+		},
+	}
 
 	for k, v := range tags {
 		dr.Tags = append(dr.Tags, Tag{
-			Name: k,
+			Name:        k,
 			Description: v,
 		})
 	}
 	for k, v := range servers {
 		dr.Servers = append(dr.Servers, Server{
-			Url: k,
+			Url:         k,
 			Description: v,
 		})
 	}
@@ -41,7 +42,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 		props := map[string]Property{}
 		typeOfS := v.Type()
 		var requiredProps []string
-		for i := 0; i< v.NumField(); i++ {
+		for i := 0; i < v.NumField(); i++ {
 			t := v.Field(i).Type().String()
 			if t == "int" {
 				t = "number"
@@ -56,7 +57,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 			tagName := typeOfS.Field(i).Name
 			if err == nil {
 				tagName = jsonTag.Name
-			} 
+			}
 			readOnly := false
 			writeOnly := false
 			if swagTag != nil {
@@ -70,23 +71,23 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 					}
 				}
 				props[tagName] = Property{
-					Type: t,
+					Type:        t,
 					Description: swagTag.Name,
-					WriteOnly: writeOnly,
-					ReadOnly: readOnly,
+					WriteOnly:   writeOnly,
+					ReadOnly:    readOnly,
 				}
 			} else {
 				props[tagName] = Property{
-					Type: t,
+					Type:        t,
 					Description: "",
-					WriteOnly: writeOnly,
-					ReadOnly: readOnly,
+					WriteOnly:   writeOnly,
+					ReadOnly:    readOnly,
 				}
 			}
-			
+
 		}
 		defs[key] = Definition{
-			Required: requiredProps,
+			Required:   requiredProps,
 			Properties: props,
 		}
 	}
@@ -96,10 +97,8 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 		securitySchemes["bearerAuth"] = SecurityScheme{Type: "http", Scheme: "bearer", BearerFormat: "JWT"}
 	}
 
-
-
 	components := Components{
-		Schemas: defs,
+		Schemas:         defs,
 		SecuritySchemes: securitySchemes,
 	}
 	dr.Components = components
@@ -117,7 +116,7 @@ func buildDocRouterPaths(r chi.Routes, prefix string) Paths {
 			subRoutes := rt.SubRoutes
 			subDrts := buildDocRouterPaths(subRoutes, rt.Pattern)
 			for k, v := range subDrts {
-				newPath := strings.ReplaceAll(rt.Pattern + k, "/*/", "/")
+				newPath := strings.ReplaceAll(rt.Pattern+k, "/*/", "/")
 				newPath = strings.TrimSuffix(newPath, "/")
 				drts[newPath] = v
 			}
@@ -146,10 +145,10 @@ func buildDocRouterPaths(r chi.Routes, prefix string) Paths {
 				} else {
 					endpoint = h
 				}
-				path := strings.ReplaceAll(prefix + rt.Pattern, "/*/", "/")
+				path := strings.ReplaceAll(prefix+rt.Pattern, "/*/", "/")
 				drt[strings.ToLower(method)] = buildFuncInfo(endpoint, path, strings.ToLower(method), len(keys))
 			}
-			
+
 			drts[rt.Pattern] = drt
 		}
 
@@ -159,12 +158,12 @@ func buildDocRouterPaths(r chi.Routes, prefix string) Paths {
 }
 
 func buildFuncInfo(i interface{}, path string, method string, maxForward int) FuncInfo {
-	
+
 	fi := FuncInfo{}
 
 	if strings.Contains(getCallerFrame(i).Func.Name(), helperFuncName) {
 		if helperFuncs[0].Method != method {
-			for  c := 0; c < maxForward; c++ {
+			for c := 0; c < maxForward; c++ {
 				if helperFuncs[c].Method == method {
 					i = helperFuncs[c].Func
 					helperFuncs = append(helperFuncs[:c], helperFuncs[c+1:]...)
@@ -187,8 +186,8 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 			t = "number"
 		}
 		parameters = append(parameters, Parameter{
-			Name: p,
-			In: "path",
+			Name:     p,
+			In:       "path",
 			Required: true,
 			Schema: ParamSchema{
 				Type: t,
@@ -201,6 +200,8 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 		fi.Security = []map[string][]string{{
 			"bearerAuth": []string{},
 		}}
+	} else {
+		fi.Security = []map[string][]string{{}}
 	}
 
 	frame := getCallerFrame(i)
@@ -215,10 +216,10 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 		fi.Summary = funcPath
 	}
 	fi.Summary = strings.Split(fi.Summary, ".")[len(strings.Split(fi.Summary, "."))-1]
-	fi.Summary = strings.TrimPrefix(fi.Summary, "-fm")
+	fi.Summary = strings.TrimSuffix(fi.Summary, "-fm")
 	comment := getFuncComment(frame.File, frame.Line)
 	if comment == "" {
-		comment = getFuncComment(frame.File, frame.Line - 1)
+		comment = getFuncComment(frame.File, frame.Line-1)
 	}
 	fi.Responses = map[string]Response{}
 	finalCommentLines := []string{}
@@ -237,7 +238,7 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 					desc = http.StatusText(ok)
 				}
 				fi.Responses[responseStates[responseRef]] = Response{
-					
+
 					Description: desc,
 					Content: Content{
 						ContentType: ContentType{
@@ -262,7 +263,7 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 			}
 			fi.RequestBody = &RequestBody{
 				Description: reqDesc,
-				Required: required,
+				Required:    required,
 				Content: Content{
 					ContentType: ContentType{
 						Schema: Schema{
@@ -298,7 +299,7 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 	}
 
 	if _, ok := fi.Responses["default"]; !ok && defaultResponse != "" {
-		fi.Responses["default"] = Response{	
+		fi.Responses["default"] = Response{
 			Description: "Default Response",
 			Content: Content{
 				ContentType: ContentType{
@@ -316,8 +317,8 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 func extractParam(paramType, commentLine string) []Parameter {
 	re := regexp.MustCompile("{.*}")
 	var parameters []Parameter
-	
-	params := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swago." + paramType + ": "), " ", "")
+
+	params := strings.ReplaceAll(strings.TrimPrefix(commentLine, "swago."+paramType+": "), " ", "")
 	for _, param := range strings.Split(params, ",") {
 		var enumValues []string
 		if res := re.FindString(param); res != "" {
@@ -336,8 +337,8 @@ func extractParam(paramType, commentLine string) []Parameter {
 			required = true
 		}
 		parameters = append(parameters, Parameter{
-			Name: param,
-			In: paramType,
+			Name:     param,
+			In:       paramType,
 			Required: required,
 			Schema: ParamSchema{
 				Type: t,
