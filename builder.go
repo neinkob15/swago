@@ -255,10 +255,10 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 				if strings.HasPrefix(component, "[]") {
 					component = component + "Array"
 					component = strings.TrimPrefix(component, "[]")
-					arrayVersionsNeeded = append(arrayVersionsNeeded, responseRef)
 					responseRef = strings.TrimPrefix(strings.TrimSuffix(responseRef, "Array"), "[]")
+					arrayVersionsNeeded = append(arrayVersionsNeeded, responseRef)
 				}
-				if ok, err := strconv.Atoi(responseStates[component]); err == nil {
+				if ok, err := strconv.Atoi(responseStates[responseRef]); err == nil {
 					desc = http.StatusText(ok)
 				}
 
