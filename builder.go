@@ -103,7 +103,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 			defs[key+"Array"] = Definition{
 				Type: "array",
 				Items: Schema{
-					Ref: "#/components/schemas/" + key + "Array",
+					Ref: "#/components/schemas/" + key,
 				},
 			}
 		}
