@@ -1,60 +1,61 @@
 package swago
 
 import (
-	"fmt"
-	"reflect"
-	"strconv"
-	"encoding/json"
 	"bytes"
-	"strings"
-	"github.com/go-chi/chi/v5"
-	"gopkg.in/yaml.v3"
-	"net/http"
-	"runtime"
+	"encoding/json"
+	"fmt"
+	"go/ast"
 	"go/parser"
 	"go/token"
-	"go/ast"
+	"net/http"
+	"reflect"
+	"runtime"
+	"strconv"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"gopkg.in/yaml.v3"
 )
 
 type DocRouter struct {
-	SwaggerVersion string `json:"openapi"`
-	Info Info `json:"info"`
-	Servers []Server `json:"servers"`
-	Tags []Tag `json:"tags"`
-	Paths Paths `json:"paths"`
-	Components Components `json:"components"`
+	SwaggerVersion string     `json:"openapi"`
+	Info           Info       `json:"info"`
+	Servers        []Server   `json:"servers"`
+	Tags           []Tag      `json:"tags"`
+	Paths          Paths      `json:"paths"`
+	Components     Components `json:"components"`
 }
 type Tag struct {
-	Name string `json:"name"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 type Server struct {
-	Url string `json:"url"`
+	Url         string `json:"url"`
 	Description string `json:"description"`
 }
 type Components struct {
-	Schemas Definitions `json:"schemas"`
-	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes"`
+	Schemas         Definitions               `json:"schemas"`
+	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
 }
 type SecurityScheme struct {
-	Type string `json:"type"`
-	Scheme string `json:"scheme"`
+	Type         string `json:"type"`
+	Scheme       string `json:"scheme"`
 	BearerFormat string `json:"bearerFormat"`
 }
 type Definitions map[string]Definition
 type Definition struct {
-	Required []string `json:"required,omitempty"`
+	Required   []string            `json:"required,omitempty"`
 	Properties map[string]Property `json:"properties"`
 }
 type Property struct {
-	Type string `json:"type"`
+	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
-	ReadOnly bool `json:"readOnly,omitempty"`
-	WriteOnly bool `json:"writeOnly,omitempty"`
+	ReadOnly    bool   `json:"readOnly,omitempty"`
+	WriteOnly   bool   `json:"writeOnly,omitempty"`
 }
 type Info struct {
-	Version string `json:"version"`
-	Title string `json:"title"`
+	Version     string `json:"version"`
+	Title       string `json:"title"`
 	Description string `json:"description"`
 }
 type Paths map[string]Methods
@@ -68,9 +69,9 @@ var servers map[string]string
 var helperFuncs []MethodWithFunc
 var helperFuncName string
 
-type MethodWithFunc struct{
+type MethodWithFunc struct {
 	Method string
-	Func func(w http.ResponseWriter, r *http.Request) (interface{}, error)
+	Func   func(w http.ResponseWriter, r *http.Request) (interface{}, error)
 }
 
 func init() {
@@ -141,14 +142,14 @@ func RegisterHelper(f func(w http.ResponseWriter, r *http.Request) (interface{},
 		panic("method could not be retrieved")
 	}
 	pc, _, _, ok := runtime.Caller(1)
-    details := runtime.FuncForPC(pc)
-    if ok && details != nil {
-        helperFuncName = details.Name()
-    } else {
+	details := runtime.FuncForPC(pc)
+	if ok && details != nil {
+		helperFuncName = details.Name()
+	} else {
 		panic("there was a problem getting the name of the helper-function")
 	}
 	helperFuncs = append(helperFuncs, MethodWithFunc{
-		Func: f,
+		Func:   f,
 		Method: method,
 	})
 }
@@ -214,7 +215,7 @@ type marshalOptions struct {
 	Intend int
 }
 
-func Indent(n int) MarshalOption {  return func(opts *marshalOptions) {opts.Intend = n } }
+func Indent(n int) MarshalOption { return func(opts *marshalOptions) { opts.Intend = n } }
 
 func jsonToYAMLFormat(n *yaml.Node) {
 	if n == nil {
