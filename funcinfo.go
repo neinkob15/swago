@@ -1,4 +1,4 @@
-package swaggergen
+package swago
 
 import (
 	"go/parser"
