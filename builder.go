@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+arrayVersionsNeeded := []string{}
+
 func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 	dr := DocRouter{SwaggerVersion: "3.0.1",
 		Info: Info{
@@ -89,6 +91,21 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 		defs[key] = Definition{
 			Required:   requiredProps,
 			Properties: props,
+			Type: "object",
+		}
+		inList := false
+		for _, item := range arrayVersionsNeeded {
+			if item == key {
+				inList := true
+			}
+		}
+		if inList {
+			defs[key + "Array"] = Definition{
+				Type: "array",
+				Items: Schema{
+					Ref: "#/components/schemas/" + key + "Array",
+				}
+			}
 		}
 	}
 	var securitySchemes map[string]SecurityScheme
@@ -237,13 +254,18 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 				if ok, err := strconv.Atoi(responseStates[responseRef]); err == nil {
 					desc = http.StatusText(ok)
 				}
+				component := responseRef
+				if strings.HasPrefix(component, "[]") {
+					component = component + "Array"
+					arrayVersionsNeeded = append(arrayVersionsNeeded, responseRef)
+				}
 				fi.Responses[responseStates[responseRef]] = Response{
 
 					Description: desc,
 					Content: Content{
 						ContentType: ContentType{
 							Schema: Schema{
-								Ref: "#/components/schemas/" + responseRef,
+								Ref: "#/components/schemas/" + component,
 							},
 						},
 					},

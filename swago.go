@@ -46,6 +46,8 @@ type Definitions map[string]Definition
 type Definition struct {
 	Required   []string            `json:"required,omitempty"`
 	Properties map[string]Property `json:"properties"`
+	Type       string              `json:"type"`
+	Items      Schema              `json:"items,omitempty"`
 }
 type Property struct {
 	Type        string `json:"type"`
