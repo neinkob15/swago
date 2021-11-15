@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-arrayVersionsNeeded := []string{}
+var arrayVersionsNeeded []string
 
 func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 	dr := DocRouter{SwaggerVersion: "3.0.1",
@@ -91,7 +91,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 		defs[key] = Definition{
 			Required:   requiredProps,
 			Properties: props,
-			Type: "object",
+			Type:       "object",
 		}
 		inList := false
 		for _, item := range arrayVersionsNeeded {
@@ -100,7 +100,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 			}
 		}
 		if inList {
-			defs[key + "Array"] = Definition{
+			defs[key+"Array"] = Definition{
 				Type: "array",
 				Items: Schema{
 					Ref: "#/components/schemas/" + key + "Array",
