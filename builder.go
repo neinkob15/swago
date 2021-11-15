@@ -251,14 +251,16 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 					continue
 				}
 				desc := ""
-				if ok, err := strconv.Atoi(responseStates[responseRef]); err == nil {
-					desc = http.StatusText(ok)
-				}
 				component := responseRef
 				if strings.HasPrefix(component, "[]") {
 					component = component + "Array"
+					component = strings.TrimPrefix(component, "[]")
 					arrayVersionsNeeded = append(arrayVersionsNeeded, responseRef)
 				}
+				if ok, err := strconv.Atoi(responseStates[component]); err == nil {
+					desc = http.StatusText(ok)
+				}
+
 				fi.Responses[responseStates[responseRef]] = Response{
 
 					Description: desc,
