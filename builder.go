@@ -256,7 +256,7 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 					component = component + "Array"
 					component = strings.TrimPrefix(component, "[]")
 					arrayVersionsNeeded = append(arrayVersionsNeeded, responseRef)
-					responseRef = strings.TrimSuffix(responseRef, "Array")
+					responseRef = strings.TrimPrefix(strings.TrimSuffix(responseRef, "Array"), "[]")
 				}
 				if ok, err := strconv.Atoi(responseStates[component]); err == nil {
 					desc = http.StatusText(ok)
