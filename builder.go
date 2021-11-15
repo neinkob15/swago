@@ -104,7 +104,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 				Type: "array",
 				Items: Schema{
 					Ref: "#/components/schemas/" + key + "Array",
-				}
+				},
 			}
 		}
 	}
