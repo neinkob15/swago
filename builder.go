@@ -96,7 +96,7 @@ func BuildDoc(r chi.Routes, title, description string) (DocRouter, error) {
 		inList := false
 		for _, item := range arrayVersionsNeeded {
 			if item == key {
-				inList := true
+				inList = true
 			}
 		}
 		if inList {
