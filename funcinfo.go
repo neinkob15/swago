@@ -43,7 +43,7 @@ type ContentType struct {
 	Schema Schema `json:"schema"`
 }
 type Schema struct {
-	Ref string `json:"$ref"`
+	Ref string `json:"$ref,omitempty"`
 }
 
 func getCallerFrame(i interface{}) *runtime.Frame {
