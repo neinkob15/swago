@@ -215,6 +215,7 @@ func buildFuncInfo(i interface{}, path string, method string, maxForward int) Fu
 		fi.Summary = funcPath
 	}
 	fi.Summary = strings.Split(fi.Summary, ".")[len(strings.Split(fi.Summary, "."))-1]
+	fi.Summary = strings.TrimPrefix(fi.Summary, "-fm")
 	comment := getFuncComment(frame.File, frame.Line)
 	if comment == "" {
 		comment = getFuncComment(frame.File, frame.Line - 1)
