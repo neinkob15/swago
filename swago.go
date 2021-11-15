@@ -45,7 +45,7 @@ type SecurityScheme struct {
 type Definitions map[string]Definition
 type Definition struct {
 	Required   []string            `json:"required,omitempty"`
-	Properties map[string]Property `json:"properties"`
+	Properties map[string]Property `json:"properties,omitempty"`
 	Type       string              `json:"type"`
 	Items      Schema              `json:"items,omitempty"`
 }
